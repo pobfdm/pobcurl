@@ -8,11 +8,11 @@ Include pobcurl:
 	#include "../../pobcurl.c"
 
 Start:
-	//Start Pobcurl
+	
 	pobInfo inf;	
 
-	strcpy(inf.url,"http://example.com/myfile.png");//url from web
-	strcpy(inf.dest,basename(inf.url)); //dest filename
+	strcpy(inf.url,"http://example.com/myfile.png");  //url from web
+	strcpy(inf.dest,basename(inf.url));  //dest filename
 	pobCurlStartDownload(&inf);
 
 You can use thread with function "pobCurlStartDownloadThread()":
