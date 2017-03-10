@@ -8,8 +8,8 @@ int main(int argc, char** argv)
 {
 	pobInfo inf;    
 	
-	strcpy(inf.url,"http://www.freemedialab.org/listing/pobvnc/Windows/pobvnc-setup.exe");  //url from web
-	strcpy(inf.dest,basename(inf.url));  //dest filename
+	inf.url=strdup("http://www.freemedialab.org/listing/pobvnc/Windows/pobvnc-setup.exe");
+	inf.dest=strdup(basename(inf.url));
 	pobCurlStartDownloadThread(&inf);
 	
 	while (inf.end==false)

@@ -70,8 +70,8 @@ gboolean updateProgressbar(gpointer   data)
 void dl (GtkWidget *widget, gpointer   data)
 {
 	//Start Pobcurl
-	strcpy(inf.url,gtk_entry_get_text(GTK_ENTRY(entry)));//url from web
-	strcpy(inf.dest,basename(inf.url)); //dest filename
+	inf.url=strdup(gtk_entry_get_text(GTK_ENTRY(entry)));
+	inf.dest=strdup(basename(inf.url));
 	pobCurlStartDownloadThread(&inf);
 	
 	// Gui stuff

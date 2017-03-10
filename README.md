@@ -11,8 +11,8 @@ Start:
 	
 	pobInfo inf;	
 
-	strcpy(inf.url,"http://example.com/myfile.png");  //url from web
-	strcpy(inf.dest,basename(inf.url));  //dest filename
+	inf.url=strdup("http://www.example.org/myfile.txt");
+	inf.dest=strdup(basename(inf.url));
 	pobCurlStartDownload(&inf);
 
 You can use thread with function "pobCurlStartDownloadThread()":

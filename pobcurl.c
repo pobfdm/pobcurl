@@ -3,11 +3,10 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-#define POB_MAX_LEN 500
 
 typedef struct {
-   char  url[POB_MAX_LEN];
-   char  dest[POB_MAX_LEN];
+   char*  url;
+   char*  dest;
    double dltotal;
    double dlnow;
    double percent;
@@ -98,8 +97,6 @@ void pobCurlCleanErr(pobInfo* inf )
 
 void pobCurlClean(pobInfo* inf)
 {
-	inf->url[0]=0;
-	inf->dest[0]=0;
 	inf->errbuf[0]=0;
 	inf->http_code=0;
 	inf->abort=0;
