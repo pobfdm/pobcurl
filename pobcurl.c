@@ -5,11 +5,13 @@
 
 
 typedef struct {
+   int id;
    char*  url;
    char*  dest;
    double dltotal;
    double dlnow;
    double percent;
+   int percentInt;
    char errbuf[CURL_ERROR_SIZE];
    bool end ;
    long http_code ;
@@ -35,6 +37,7 @@ int progressDownload(pobInfo *inf,
 	inf->dltotal=t;
 	inf->dlnow=d;
 	inf->percent= d*100/t;
+	inf->percentInt=(int)inf->percent;
 	
 	return inf->abort;
  
