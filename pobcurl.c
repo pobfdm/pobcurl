@@ -2,7 +2,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <stdbool.h>
-
+#include <string.h>
 
 typedef struct {
    int id;
@@ -95,12 +95,12 @@ void *pobCurlDownload(pobInfo* inf)
 
 void pobCurlCleanErr(pobInfo* inf )
 {
-	inf->errbuf[0]=0;
+	strcpy(inf->errbuf,"");
 }
 
 void pobCurlClean(pobInfo* inf)
 {
-	inf->errbuf[0]=0;
+	strcpy(inf->errbuf,"");
 	inf->http_code=0;
 	inf->abort=0;
 }

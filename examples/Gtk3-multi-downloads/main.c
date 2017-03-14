@@ -1,4 +1,5 @@
 #include <gtk/gtk.h>
+#include <glib/gstdio.h>
 #include "../../pobcurl.c"
 
 #include <string.h> //strcpy()
@@ -6,13 +7,20 @@
 
 #define MAXDL 20
 
-GObject *btAdd, *entry ;
+GObject *btAdd, *entry, *btClear ;
 GObject *liststoreDownloads, *treeSelection, *treeviewDownloads;
 GtkTreeIter    iter;
 pobInfo inf[MAXDL];
 gint id=1 ;
 
-
+enum
+	{
+	  COL_ID  ,
+	  COL_URL ,
+	  COL_PROGRESS,
+	  COL_STATUS,
+	  NUM_COLS
+	} ;
 
 
 //Simple messagebox for display errors
@@ -42,13 +50,7 @@ err_message(GtkWidget *main_window,gchar* title, gchar *msg, gchar* winlabel)
 gboolean updateProgressbar(gpointer   data)
 {
 	
-	enum
-	{
-	  COL_ID  ,
-	  COL_URL ,
-	  COL_PROGRESS,
-	  NUM_COLS
-	} ;
+	
 	GtkTreeIter  iter;
     gboolean     valid;
 
@@ -61,46 +63,41 @@ gboolean updateProgressbar(gpointer   data)
        
 		int cidx;
 		gtk_tree_model_get(GTK_TREE_MODEL(liststoreDownloads), &iter, COL_ID, &cidx, -1);
-		if(inf[cidx].percentInt>0 && inf[cidx].percentInt<=100)
+		
+		if(inf[cidx].percentInt>=0 && inf[cidx].percentInt<=100 )
 			gtk_list_store_set(GTK_LIST_STORE(liststoreDownloads), &iter, COL_PROGRESS, inf[cidx].percentInt, -1);
-
+	
+		//Connection error
+		size_t len = strlen(inf[cidx].errbuf);
+		if (len)
+		{
+			 g_print("Download error:%s\n",inf[cidx].errbuf);
+			 gtk_list_store_set(GTK_LIST_STORE(liststoreDownloads), &iter, COL_STATUS, inf[cidx].errbuf, -1);
+			 inf[cidx].end=true;
+		}
+		
+		
+		//Http error
+		if(inf[cidx].http_code>=400)
+		{
+			gchar* httpErr=g_strdup_printf("Error on download file: %ld",inf[cidx].http_code);
+			gtk_list_store_set(GTK_LIST_STORE(liststoreDownloads), &iter, COL_STATUS, httpErr, -1);
+			inf[cidx].end=true;
+			g_remove (inf[cidx].dest);
+		}
+		
+		//End widout errors
+		if (inf[cidx].end==true && inf[cidx].http_code<400 && len==0 )
+		{
+			 //pobCurlClean(&inf[cidx]);
+			 gtk_list_store_set(GTK_LIST_STORE(liststoreDownloads), &iter, COL_STATUS, "Success", -1);
+		}
+	
+		
+		
 		/* Make iter point to the next row in the list store */
 		valid = gtk_tree_model_iter_next(GTK_TREE_MODEL(liststoreDownloads), &iter);
     }
-	
-	
-	
-	
-	/*if (progress>0)gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(data), progress);
-	progress=inf.percent/100;
-	
-	
-	//Connection Error
-	size_t len = strlen(inf.errbuf);
-	if (len)
-	{
-		 g_print("Download error:%s\n",inf.errbuf);
-		 err_message(NULL,"Error:", inf.errbuf, "Errors on downloads");
-		 pobCurlCleanErr(&inf);
-	}
-	
-	//Http error
-	if(inf.http_code>=400)
-	{
-		gchar* httpErr=g_strdup_printf("%ld",inf.http_code);
-		err_message(NULL,"Http Error:", httpErr, "Errors on downloads");
-	}
-	
-	//End download
-	if (inf.end==true)
-	{
-		 gtk_widget_set_sensitive(GTK_WIDGET(btAdd), TRUE) ;
-		 gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(data), 1.0);
-		 g_print("\n Stop updateProgressbar .\n");
-		 pobCurlClean(&inf);
-		 return FALSE;
-	}*/
-	
 	
 	return TRUE;
 }
@@ -109,15 +106,9 @@ gboolean updateProgressbar(gpointer   data)
 void addDl (GtkWidget *widget, gpointer   data)
 {
 	
-	enum
-	{
-	  COL_ID  ,
-	  COL_URL ,
-	  COL_PROGRESS,
-	  NUM_COLS
-	} ;
 	
-	gchar* filename=g_strdup(gtk_entry_get_text(GTK_ENTRY(entry)));
+	
+	gchar* filename=g_path_get_basename (gtk_entry_get_text(GTK_ENTRY(entry)));
 	
 	gtk_list_store_append (GTK_LIST_STORE(liststoreDownloads), &iter);
 	gtk_list_store_set (GTK_LIST_STORE(liststoreDownloads), &iter,
@@ -132,7 +123,7 @@ void addDl (GtkWidget *widget, gpointer   data)
 	pobCurlStartDownloadThread(&inf[id]);
 											
 	
-	g_timeout_add(1000, updateProgressbar, NULL);
+	if (id==1) g_timeout_add(1000, updateProgressbar, NULL);
 	id++;
 
 }
@@ -152,7 +143,17 @@ void abortDownload (GtkWidget *widget, gpointer   data)
 	//inf.abort=1;
 }
 
+void clearDls (GtkWidget *widget, gpointer   data)
+{
+	id=1;
+	gtk_list_store_clear (GTK_LIST_STORE(liststoreDownloads));
+	int i;
+	for (i=0 ; i<=MAXDL;i++) inf[i].abort=1;
+	sleep(1);
+	for (i=0 ; i<=MAXDL;i++) pobCurlClean(&inf[i]);
+	//sleep(1);
 
+}
 
 static void
   onRowActivated (GtkTreeView        *view,
@@ -161,13 +162,7 @@ static void
                   gpointer            user_data)
 {
  
-    enum
-	{
-	  COL_ID  ,
-	  COL_URL ,
-	  COL_PROGRESS,
-	  NUM_COLS
-	} ;
+    
  
     GtkTreeModel *model;
     GtkTreeSelection *sel = gtk_tree_view_get_selection (view);
@@ -178,10 +173,10 @@ static void
 	if (gtk_tree_model_get_iter(model, &iter, path))
 	{
 		//gint id;
-		gchar* url;
+		/*gchar* url;
 		gtk_tree_model_get(model, &iter, COL_URL, &url, -1);
 		gtk_entry_set_text(GTK_ENTRY(entry),url);
-		g_free(url);
+		g_free(url);*/
 	}else{
 		//Se non ho selezionato nessun record esco senza far nulla 
 		return; 
@@ -212,6 +207,7 @@ void mainWindowInit()
 	mainWindow=gtk_builder_get_object (xml,"mainWindow" );
 	btAdd=gtk_builder_get_object (xml,"btAdd" );
 	btStop=gtk_builder_get_object (xml,"btAbort" );
+	btClear=gtk_builder_get_object (xml,"btClear" );
 	progressBar=gtk_builder_get_object(xml,"progressBar");
 	entry=gtk_builder_get_object(xml,"entry");
 	lbl=gtk_builder_get_object(xml,"lbl");
@@ -225,6 +221,7 @@ void mainWindowInit()
 	g_object_unref( G_OBJECT( xml ) );
 	g_signal_connect (mainWindow, "destroy", G_CALLBACK (on_mainWindow_delete_event), NULL);
 	g_signal_connect (btAdd, "clicked", G_CALLBACK (addDl),NULL );
+	g_signal_connect (btClear, "clicked", G_CALLBACK (clearDls),NULL );
 	g_signal_connect (btStop, "clicked", G_CALLBACK (abortDownload),NULL);
 	g_signal_connect(treeviewDownloads, "row-activated", G_CALLBACK(onRowActivated), NULL);
 

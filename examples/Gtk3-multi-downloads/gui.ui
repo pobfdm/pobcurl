@@ -10,6 +10,8 @@
       <column type="gchararray"/>
       <!-- column-name progress -->
       <column type="gint"/>
+      <!-- column-name status -->
+      <column type="gchararray"/>
     </columns>
   </object>
   <object class="GtkWindow" id="mainWindow">
@@ -81,6 +83,17 @@
                       <object class="GtkCellRendererProgress" id="progress"/>
                       <attributes>
                         <attribute name="value">2</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="col3">
+                    <property name="title" translatable="yes">Status</property>
+                    <child>
+                      <object class="GtkCellRendererText"/>
+                      <attributes>
+                        <attribute name="text">3</attribute>
                       </attributes>
                     </child>
                   </object>
