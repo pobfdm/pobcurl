@@ -13,6 +13,8 @@ GtkTreeIter    iter;
 pobInfo inf[MAXDL];
 gint id=1 ;
 
+
+
 enum
 	{
 	  COL_ID  ,
@@ -113,13 +115,13 @@ void addDl (GtkWidget *widget, gpointer   data)
 	gtk_list_store_append (GTK_LIST_STORE(liststoreDownloads), &iter);
 	gtk_list_store_set (GTK_LIST_STORE(liststoreDownloads), &iter,
 												COL_ID, id,
-												//COL_URL, gtk_entry_get_text(GTK_ENTRY(entry)),
 												COL_URL, filename,
 												COL_PROGRESS, 0,	
 												-1);
 	
 	inf[id].url=strdup(gtk_entry_get_text(GTK_ENTRY(entry)));
 	inf[id].dest=strdup(basename(inf[id].url));
+	//inf[id].dest=strdup("video.mp4");
 	pobCurlStartDownloadThread(&inf[id]);
 											
 	
@@ -140,7 +142,10 @@ void on_mainWindow_delete_event(GtkWidget *widget, gpointer   data)
 // If I click the stop button the download is canceled
 void abortDownload (GtkWidget *widget, gpointer   data)
 {
-	//inf.abort=1;
+	int i;
+	gtk_tree_model_get(GTK_TREE_MODEL(liststoreDownloads), &iter, COL_ID, &i, -1);
+	inf[i].abort=1;
+	
 }
 
 void clearDls (GtkWidget *widget, gpointer   data)
@@ -151,7 +156,6 @@ void clearDls (GtkWidget *widget, gpointer   data)
 	for (i=0 ; i<=MAXDL;i++) inf[i].abort=1;
 	sleep(1);
 	for (i=0 ; i<=MAXDL;i++) pobCurlClean(&inf[i]);
-	//sleep(1);
 
 }
 
