@@ -155,7 +155,7 @@ void clearDls (GtkWidget *widget, gpointer   data)
 	int i;
 	for (i=0 ; i<=MAXDL;i++) inf[i].abort=1;
 	sleep(1);
-	for (i=0 ; i<=MAXDL;i++) pobCurlClean(&inf[i]);
+	for (i=0 ; i<=MAXDL;i++) pobCurlCleanErr(&inf[i]);
 
 }
 
