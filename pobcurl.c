@@ -69,6 +69,7 @@ void *pobCurlDownload(pobInfo* inf)
 		curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, progressDownload);
 		curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, inf);
 		curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, inf->errbuf);
+		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 		
 		
 		
